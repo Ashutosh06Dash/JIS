@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  REGISTRAR
+  JUDGE
+  LAWYER
+}
+
+enum CaseStatus {
+  PENDING
+  RESOLVED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  role Role
+  name String
+  userName String @unique
+  password String
+  email String @unique
+  contactNumber String
+  salt String
+  bills           Billing[]
+}
+
+model CaseDetails {
+  id                Int      @id @default(autoincrement())
+  cin               String   @unique @default(cuid())
+  defendantName     String
+  defendantAddress  String
+  crimeType         String
+  crimeDate         DateTime
+  crimeLocation     String
+  arrestingOfficer  String
+  arrestDate        DateTime
+  caseStartDate     DateTime @default(now())
+  status            CaseStatus @default(PENDING)
+  completionDate    DateTime?
+  hearings          Hearing[]
+  summaries         CaseSummary[]
+  billings          Billing[]
+  
+  @@index([status])
+  @@index([caseStartDate])
+}
+
+model CaseSummary {
+  id          Int      @id @default(autoincrement())
+  summaryDate DateTime @default(now())
+  content     String
+  caseId      Int
+  case        CaseDetails @relation(fields: [caseId], references: [id])
+  
+  @@index([summaryDate])
+}
+
+model Hearing {
+  id                Int      @id @default(autoincrement())
+  hearingDate       DateTime
+  nextHearingDate   DateTime?
+  caseId            Int
+  case              CaseDetails @relation(fields: [caseId], references: [id])
+  
+  @@index([hearingDate])
+}
+
+model Billing {
+  id             Int           @id @default(autoincrement())
+  viewDate       DateTime      @default(now())
+  chargeAmount   Float         @default(10.0)
+  paymentStatus  PaymentStatus @default(PENDING)
+  
+  caseId         Int
+  case           CaseDetails   @relation(fields: [caseId], references: [id])
+
+  lawyerId       Int
+  lawyer         User         @relation(fields: [lawyerId], references: [id])
+  
+  @@index([viewDate])
+}
