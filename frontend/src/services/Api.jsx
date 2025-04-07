@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api", // update with your backend URL
+  baseURL: "https://jis-backend-d6di.onrender.com/api", // update with your backend URL
 });
 
 // Add request interceptor for debugging
